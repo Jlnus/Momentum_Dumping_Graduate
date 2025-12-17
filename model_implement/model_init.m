@@ -7,6 +7,18 @@ SC_Kepler = [(6371.2+600)*1000, 0.00221, 0*pi/180, 0*pi/180, 0, 0];
 
 w_orbit = kepler6_to_orbit_rate(SC_Kepler);%orbit rate : [rad/s]
 
+%% 
+% RW1
+RW1_ROT = [0 45 0]';%ZYX [deg]
+RW2_ROT = [0 0 -45]';%ZYX [deg]
+RW3_ROT = [0 -45 0]';%ZYX [deg]
+RW4_ROT = [0 0 45]';%ZYX [deg]
+RW1_POS = [0.5 0 0]';%XYZ [m]
+RW2_POS = [0 0.5 0]';%XYZ [m]
+RW3_POS = [-0.5 0 0]';%XYZ [m]
+RW4_POS = [0 -0.5 0]';%XYZ [m]
+
+
 %%
 % THR.info : https://satsearch.co/products/ecaps-22n-hpgp-thruster?utm_source=chatgpt.com
 RCS_Facealpha = 1.0;
