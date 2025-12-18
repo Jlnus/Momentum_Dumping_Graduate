@@ -10,6 +10,7 @@ SC_Kepler = [(6371.2+600)*1000, 0.00221, 0*pi/180, 0*pi/180, 0, 0];
 w_orbit = kepler6_to_orbit_rate(SC_Kepler);%orbit rate : [rad/s]
 
 %% 
+Fly_Wheel_Mass = 12;%[kg]
 % RW1
 RW1_ROT = [0 45 0]';%ZYX [deg]
 RW2_ROT = [0 0 -45]';%ZYX [deg]
