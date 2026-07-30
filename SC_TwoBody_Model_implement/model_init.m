@@ -1,55 +1,66 @@
 clear all;
-close all;
 clc;
 
 % deg2rad = pi/180;
 rpm2rad = (2*pi)/60;
-rad2rpm = 1/rpm2rad;
+rad2rpm = 1/rpm2rad; 
 dt = 0.01;
-
-%		(1) - semimajor axis of the orbit in meters. 
-%		(2) - eccentricity.
-%		(3) - inclinatsion in radians.
-%		(4) - right ascension of ascending node in radians.
-%		(5) - argument of perigee in radians.
-%		(6) - mean anomaly in radians.
-SC_Kepler = [(6371.2+600)*1000, 0.00221, 0*pi/180, 0*pi/180, 0, deg2rad(270)];
-TS_Kepler = [(6371.2+600)*1000, 0.00221, 0*pi/180, 0*pi/180, 0, deg2rad(270)+0.000003];
-SC_state0 = kepel_statvec (SC_Kepler);
-TS_state0 = kepel_statvec (TS_Kepler);
-
-SC_pos0 = [SC_state0(1),SC_state0(2),SC_state0(3)]';%ECI 
-SC_vel0 = [SC_state0(4),SC_state0(5),SC_state0(6)]';%ECI 
-TS_pos0 = [TS_state0(1),TS_state0(2),TS_state0(3)]';%ECI w_orbitw_orbitw_orbit
-TS_vel0 = [TS_state0(4),TS_state0(5),TS_state0(6)]';%ECI 
-
-REL_TS_POS_I_0 = TS_pos0 - SC_pos0;
-REL_TS_VEL_I_0 = TS_vel0 - SC_vel0;
-
-w_orbit = kepler6_to_orbit_rate(TS_Kepler); % orbit rate : [rad/s]
 
 SC_Ib = [1843.56  -0.0019  -803.89; % [kg m^2]
          -0.0019  22725.16 -6.36;
          -803.89  -6.36    22894.86];
 norm_Ib = diag(diag(SC_Ib) / norm(diag(SC_Ib)));
 m_tot = 3300;%[kg]
-wb0 = [0 0 0]';
-ag0 = deg2rad([-5 5 -5]');
-qb0 = eul2quat(ag0','ZYX')';
-vI0 = [0 0 0]';
-pI0 = [0 0 0]';
 
+% Initial state
+%   (1) - semimajor axis of the orbit in meters. 
+%   (2) - eccentricity.
+%   (3) - inclinatsion in radians.
+%   (4) - right ascension of ascending node in radians.
+%   (5) - argument of perigee in radians.
+%	(6) - mean anomaly in radians.
+SC_Kepler = [(6371.2+600)*1000, 0.00221, 0*pi/180, 0*pi/180, 0, deg2rad(270)];
+TS_Kepler = [(6371.2+600)*1000, 0.00221, 0*pi/180, 0*pi/180, 0, deg2rad(270)+0.0000039];
+SC_state0 = kepel_statvec (SC_Kepler);
+TS_state0 = kepel_statvec (TS_Kepler);
+
+SC_pos0 = [SC_state0(1),SC_state0(2),SC_state0(3)]';%ECI 
+SC_vel0 = [SC_state0(4),SC_state0(5),SC_state0(6)]';%ECI 
+TS_pos0 = [TS_state0(1),TS_state0(2),TS_state0(3)]';%ECI  
+TS_vel0 = [TS_state0(4),TS_state0(5),TS_state0(6)]';%ECI 
+ 
+w_orbit = kepler6_to_orbit_rate(TS_Kepler); % orbit rate : [rad/s]
+
+% chaser
+ag0 = deg2rad([-8 5 -5]); % x:-5 y:5 z:-8
+qb0 = angle2quat(ag0(1),ag0(2),ag0(3),'ZYX')';
+wb0 = deg2rad([-0.3 -0.1 0.2])'; % rad/s
+% wb0 = [0 0 0]';
+
+% target
 TS_Ib = diag([1 1 1]);
 TS_wb0 = deg2rad([0 0 0]');
 TS_wb0(3) = w_orbit;
 TS_qb0 = angle2quat(deg2rad(0),deg2rad(0),deg2rad(0),'ZYX')';
 
+ 
+port_offset = [7.196; 0 ; 0.618];
+REL_TS_POS_I_0 = TS_pos0 - SC_pos0;
+REL_port_POS_I_0 = REL_TS_POS_I_0 - quat2rotm(qb0') * port_offset;
+REL_TS_VEL_I_0 = TS_vel0 - SC_vel0;
+REL_port_VEL_I_0 = REL_TS_VEL_I_0 - quat2rotm(qb0') * cross(wb0,port_offset);
+
 %% Reaction Wheel Configuration
 % Fly_Wheel_Mass = 12;%[kg]
-Iws = diag([1 1 1 1])*0.227;
+Iws = diag([1 1 1 1])*0.2274;
 RW_t_max = 0.5;
 RW_Omegad_max = RW_t_max;
 RW_Max_Speed = 4200*rpm2rad;
+Omega_ref = [1000 1000 1000 1000]*rpm2rad;
+Omega1_init = 2000*rpm2rad;
+Omega2_init = 2000*rpm2rad;
+Omega3_init = 2000*rpm2rad;
+Omega4_init = 2000*rpm2rad;
 
 RW1_ROT = [0 45 0]';%ZYX [deg]
 RW2_ROT = [0 0 -45]';%ZYX [deg]
@@ -71,14 +82,10 @@ RW3_Axis = RW3_ROTM(:,3);
 RW4_Axis = RW4_ROTM(:,3);
 RW_As = [RW1_Axis,RW2_Axis,RW3_Axis,RW4_Axis];
 
-Omega1_init = 1000*rpm2rad;
-Omega2_init = 1000*rpm2rad;
-Omega3_init = 1000*rpm2rad;
-Omega4_init = 1000*rpm2rad;
 
 %% RCS Configuration
 RCS_F = 1.0;%[N]
-RCS_PWM_Freq = 0.5;%[sec]
+RCS_PWM_Freq = 0.1;%[sec]
 RCS_Sampling_time = 0.01;
 % THR.info : https://satsearch.co/products/ecaps-22n-hpgp-thruster?utm_source=chatgpt.com
 RCS_Facealpha = 1.0;
@@ -185,7 +192,7 @@ function statvec  = kepel_statvec(kepel)
 %	Valdemir Carrara		july 2005		(C version)
 %   Valdemir Carrara            March/09        Matlab
 
-EARTH_GRAVITY	= 3.9860064e+14;		% Earth's gravitational constant (m**3/s**2)
+EARTH_GRAVITY	= 3.986004418e14;		% Earth's gravitational constant (m**3/s**2)
 
 a    = kepel(1);	% semi-major axis
 exc  = kepel(2);	% eccentricity
@@ -340,7 +347,7 @@ function out = kepler6_to_orbit_rate(kep)
 %   out.period_min: orbital period [min]
 
 mu = 3.986004418e14; % Earth [m^3/s^2]
-
+    
 a = kep(1);
 
 % mean motion
