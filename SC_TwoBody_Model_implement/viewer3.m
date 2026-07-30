@@ -31,6 +31,11 @@ rel_w_b = out.rel_w_b;
 % los_angle = out.LoS_angle;
 wheel_rate = out.wheel_rate; % rpm
 wheel_rated = out.wheel_rated;
+wheel_momentum = zeros(length(sim_t),3);
+for i=1:length(sim_t) 
+    wheel_momentum(i,:) = RW_As*Iws*wheel_rate(i,:)'*rpm2rad;
+end
+
 
 qp_F_cmd = out.RCS_QP_F_cmd;
 qp_tau_cmd = out.RCS_QP_tau_cmd;
@@ -42,10 +47,11 @@ q_err = quatmultiply(quatinv(ts_q_b), ss_q_b);
 
 RCS_onoff = out.RCS_onoff;
 
+
 %% plot
 % 상대 위치 오차
 figure(1);clf
-sgtitle('Target-Chaser relative state in chaser body frame')
+sgtitle('Relative position error')
 subplot(2,1,1)
 hold on;grid on;ylabel('Pos [m]');ylim padded
 plot(sim_t, rel_pos_b(:,1))
@@ -57,7 +63,7 @@ hold on;grid on;ylabel('Vel [m/s]');xlabel('time [s]');ylim padded
 plot(sim_t, rel_vel_b(:,1))
 plot(sim_t, rel_vel_b(:,2))
 plot(sim_t, rel_vel_b(:,3))
-legend('x','y','z')
+legend('x','y','z','Location','best')
  
 % 상대 자세 오차
 figure(2);clf
@@ -65,7 +71,7 @@ sgtitle('Relative attitude error')
 subplot(2,1,1)
 hold on;grid on;ylabel('ang_{err} [deg]');ylim padded
 plot(sim_t, rel_angle_b)
-legend('roll','pitch','yaw')
+legend('roll','pitch','yaw','Location','best')
 subplot(2,1,2)
 hold on;grid on;ylabel('\omega_{err} [deg/s]');xlabel('time [s]');ylim padded
 plot(sim_t, rel_w_b)
@@ -73,60 +79,64 @@ legend('x','y','z')
 
 % RW 상태
 figure(3);clf
+subplot(2,1,1)
 title('Wheel speed')
-hold on;grid on;ylabel('[rpm]');xlabel('time [s]');ylim([-1000 4500]);xlim tight
+hold on;grid on;ylabel('[rpm]');xlabel('time [s]');ylim([-1000 4500]); 
 plot(sim_t,wheel_rate)
 yline(Omega_ref(1)*rad2rpm,'--','LineWidth',1)
 legend('w_1','w_2','w_3','w_4','reference','Location','northeast')
-
-
+subplot(2,1,2)
+hold on;grid on;ylabel('[Nms]');xlabel('time [s]');
+plot(sim_t,wheel_momentum)
+yline(RW_As*Iws*[1000 1000 1000 1000]'*rpm2rad,'--','LineWidth',1)
+legend('x','y','z','reference','Location','northeast')
 
 % qp cmd
 figure(4);clf
 sgtitle('QP command')
 subplot(3,1,1)
-hold on;grid on;ylabel('RCS F cmd [N]');ylim padded;xlim tight
+hold on;grid on;ylabel('RCS F cmd [N]');ylim padded; 
 plot(sim_t,qp_F_cmd)
 legend('x','y','z')
 subplot(3,1,2)
-hold on;grid on;ylabel('RCS torque cmd [N m]');ylim padded;xlim tight
+hold on;grid on;ylabel('RCS torque cmd [N m]');ylim padded; 
 plot(sim_t,qp_tau_cmd)
 legend('x','y','z')
 subplot(3,1,3)
-hold on;grid on;ylabel('RW torque cmd [N m]');xlabel('time [s]');ylim padded;xlim tight
+hold on;grid on;ylabel('RW torque cmd [N m]');xlabel('time [s]');ylim padded; 
 plot(sim_t,qp_rw_cmd)
 legend('w_1','w_2','w_3','w_4')
   
 %slack 변수
 figure(5);clf
-sgtitle('QP slack variable')
+sgtitle('slack variable')
 subplot(3,1,1)
-hold on;grid on;ylabel('s_{\tau} [N m]');ylim padded;xlim tight
+hold on;grid on;ylabel('s_{\tau} [N m]');ylim padded; 
 plot(sim_t,s_tau)
 legend('x','y','z')
 subplot(3,1,2)
-hold on;grid on;ylabel('s_{dump} [N m]');ylim padded;xlim tight
+hold on;grid on;ylabel('s_{dump} [N m]');ylim padded; 
 plot(sim_t,s_dump)
 legend('x','y','z')
 subplot(3,1,3)
-hold on;grid on;ylabel('s_F [N]');xlabel('time [s]');ylim padded;xlim tight
+hold on;grid on;ylabel('s_F [N]');xlabel('time [s]');ylim padded; 
 plot(sim_t,s_F)
 legend('x','y','z')
  
 
 % RCS duty
-figure(7);clf
-sgtitle('RCS on/off cmd')
-for i = 1:16
-    subplot(4,4,i)
-    plot(sim_t,RCS_onoff(:,i))
-    grid on; ylim([-0.2 1.2])
-end
-
-% RCS on cmd count
-figure(8);clf
-sgtitle('RCS on command count'); hold on; grid on;
-bar(1:16,sum(RCS_onoff)); xlabel('Thruster Num');xticks = 1:16;
+% figure(7);clf
+% sgtitle('RCS on/off cmd')
+% for i = 1:16
+%     subplot(4,4,i)
+%     plot(sim_t,RCS_onoff(:,i))
+%     grid on; ylim([-0.2 1.2])
+% end
+% 
+% % RCS on cmd count
+% figure(8);clf
+% sgtitle('RCS on command count'); hold on; grid on;
+% bar(1:16,sum(RCS_onoff)); xlabel('Thruster Num');xticks = 1:16;
 
 
 % figure('Name','SS Inertial POS Data Log [m]');
@@ -221,13 +231,14 @@ return
 figure(100);clf
 set(gcf, 'Color', 'w');
 ax = axes;
-title('Target-Chaser rel motion')
+% title('Target-Chaser rel motion')
 hold on; grid on;
 xlabel('X [m]');
 ylabel('Y [m]');
 zlabel('Z [m]');
 axis equal
-axis([-33 9 -4 4 -4 4])
+axis([-32 9 -4 4 -4 4])
+% axis([-40 70 -40 30 -55 55])
 view(-40,30)
 
 % Target 모델
@@ -274,15 +285,15 @@ h2 = trisurf(SS_stl, ...
  
  
 % ss
-s_p1 = plot3(0,0,0,'k.',"MarkerSize",20);  % chaser CG
-s_qvx1 = quiver3(0,0,0,0,0,0,3,'r','LineWidth',1);
-s_qvy1 = quiver3(0,0,0,0,0,0,3,'g','LineWidth',1);
-s_qvz1 = quiver3(0,0,0,0,0,0,3,'b','LineWidth',1);
+s_p1 = plot3(0,0,0,'k.',"MarkerSize",10);  % chaser CG
+s_qvx1 = quiver3(0,0,0,0,0,0,4,'r','LineWidth',1);
+s_qvy1 = quiver3(0,0,0,0,0,0,4,'g','LineWidth',1);
+s_qvz1 = quiver3(0,0,0,0,0,0,4,'b','LineWidth',1);
 
-s_p2 = plot3(0,0,0,'r.',"MarkerSize",20);  % chaser docking port
-s_qvx2 = quiver3(0,0,0,0,0,0,3,'r','LineWidth',1);
-s_qvy2 = quiver3(0,0,0,0,0,0,3,'g','LineWidth',1);
-s_qvz2 = quiver3(0,0,0,0,0,0,3,'b','LineWidth',1);
+s_p2 = plot3(0,0,0,'r.',"MarkerSize",10);  % chaser docking port
+s_qvx2 = quiver3(0,0,0,0,0,0,4,'r','LineWidth',1);
+s_qvy2 = quiver3(0,0,0,0,0,0,4,'g','LineWidth',1);
+s_qvz2 = quiver3(0,0,0,0,0,0,4,'b','LineWidth',1);
 
 [cyl_x, cyl_y, cyl_z] = cylinder(0.07, 32); % rad, n
 h_port = hgtransform('Parent', ax);
@@ -298,10 +309,10 @@ Rs = quat2rotm(ts_q_b(1,:));
 ex = Rs * [1;0;0] * 0.5; 
 ey = Rs * [0;1;0] * 0.5;
 ez = Rs * [0;0;1] * 0.5;
-t_p = plot3(0,0,0,'b.',"MarkerSize",20);
-t_qvx = quiver3(0,0,0,ex(1),ex(2),ex(3),3,'r','LineWidth',1);
-t_qvy = quiver3(0,0,0,ey(1),ey(2),ey(3),3,'g','LineWidth',1);
-t_qvz = quiver3(0,0,0,ez(1),ez(2),ez(3),3,'b','LineWidth',1);
+t_p = plot3(0,0,0,'b.',"MarkerSize",10);
+t_qvx = quiver3(0,0,0,ex(1),ex(2),ex(3),4,'r','LineWidth',1);
+t_qvy = quiver3(0,0,0,ey(1),ey(2),ey(3),4,'g','LineWidth',1);
+t_qvz = quiver3(0,0,0,ez(1),ez(2),ez(3),4,'b','LineWidth',1);
 
 % legend([t_p s_p s_qvx s_qvy s_qvz], {'target','chaser','x','y','z'},'Location','southeast');
  

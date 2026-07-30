@@ -57,10 +57,10 @@ RW_t_max = 0.5;
 RW_Omegad_max = RW_t_max;
 RW_Max_Speed = 4200*rpm2rad;
 Omega_ref = [1000 1000 1000 1000]*rpm2rad;
-Omega1_init = 2000*rpm2rad;
-Omega2_init = 2000*rpm2rad;
-Omega3_init = 2000*rpm2rad;
-Omega4_init = 2000*rpm2rad;
+Omega1_init = 1500*rpm2rad;
+Omega2_init = 2500*rpm2rad;
+Omega3_init = 1500*rpm2rad;
+Omega4_init = 2500*rpm2rad;
 
 RW1_ROT = [0 45 0]';%ZYX [deg]
 RW2_ROT = [0 0 -45]';%ZYX [deg]
