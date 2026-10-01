@@ -1,0 +1,10 @@
+# 버전 설명
+
+model_main_simscape : 추력기16+반작용휠4  simscape 사용한 초기버전. 공부용
+
+model_main : 단계별 업데이트
+3 : LoS quaternion, pd 제어, QP 안씀
+4 : 위치는 추력기 pd, 자세는 pd 후 qp로 제어할당
+5 : 최종버전
+
+model_main_duty : 논문의 한계로 설명된, 16개의 개별 추력기 명령을 QP에 넣는 버전. 되긴 하지만 불안정, 수정필요

@@ -53,14 +53,14 @@ REL_port_VEL_I_0 = REL_TS_VEL_I_0 - quat2rotm(qb0') * cross(wb0,port_offset);
 %% Reaction Wheel Configuration
 % Fly_Wheel_Mass = 12;%[kg]
 Iws = diag([1 1 1 1])*0.2274;
-RW_t_max = 0.5;
+RW_t_max = 0.5; % [Nm] 
 RW_Omegad_max = RW_t_max;
 RW_Max_Speed = 4200*rpm2rad;
 Omega_ref = [1000 1000 1000 1000]*rpm2rad;
-Omega1_init = 1500*rpm2rad;
-Omega2_init = 2500*rpm2rad;
-Omega3_init = 1500*rpm2rad;
-Omega4_init = 2500*rpm2rad;
+Omega1_init = 2000*rpm2rad;
+Omega2_init = 2000*rpm2rad;
+Omega3_init = 2000*rpm2rad;
+Omega4_init = 2000*rpm2rad;
 
 RW1_ROT = [0 45 0]';%ZYX [deg]
 RW2_ROT = [0 0 -45]';%ZYX [deg]
@@ -87,8 +87,6 @@ RW_As = [RW1_Axis,RW2_Axis,RW3_Axis,RW4_Axis];
 RCS_F = 1.0;%[N]
 RCS_PWM_Freq = 0.1;%[sec]
 RCS_Sampling_time = 0.01;
-% THR.info : https://satsearch.co/products/ecaps-22n-hpgp-thruster?utm_source=chatgpt.com
-RCS_Facealpha = 1.0;
 
 % % % % % % +Z Size % % % % % % % % %
 RCS1_ROT = [0 90 0]';%ZYX [deg]
